@@ -21,6 +21,7 @@ Future<dynamic> myBackgroundMessageHandler(Map<String, dynamic> message) {
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -66,9 +67,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-    super.initState();
-
+    firebaseCloudMessagingListeners();
     initParse();
+    super.initState();
   }
 
   Future<void> initParse() async {
@@ -87,7 +88,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> initInstallation() async {
-    firebaseCloudMessagingListeners();
     final ParseInstallation installation =
         await ParseInstallation.currentInstallation();
     String token = await _firebaseMessaging.getToken();
@@ -99,7 +99,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void firebaseCloudMessagingListeners() {
     if (Platform.isIOS) iOSPermission();
-
     _firebaseMessaging.configure(
       onMessage: (Map<String, dynamic> message) async {
         print('on message $message');
