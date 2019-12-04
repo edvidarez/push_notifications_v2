@@ -6,14 +6,17 @@ import 'package:parse_server_sdk/parse_server_sdk.dart';
 
 void main() => runApp(MyApp());
 Future<dynamic> myBackgroundMessageHandler(Map<String, dynamic> message) {
+  print("Message $message");
   if (message.containsKey('data')) {
     // Handle data message
     final dynamic data = message['data'];
+    print("data $data");
   }
 
   if (message.containsKey('notification')) {
     // Handle notification message
     final dynamic notification = message['notification'];
+    print("notification $notification");
   }
 
   // Or do other work.
@@ -74,6 +77,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> initParse() async {
     // Initialize parse
+    print("Initializing Parse");
     await Parse()
         .initialize("myAppId", "https://486e54e4.ngrok.io/parse", debug: true);
 
@@ -98,7 +102,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void firebaseCloudMessagingListeners() {
-    if (Platform.isIOS) iOSPermission();
+    if (Platform.isIOS) {
+      iOSPermission();
+    }
     _firebaseMessaging.configure(
       onMessage: (Map<String, dynamic> message) async {
         print('on message $message');
@@ -106,11 +112,12 @@ class _MyHomePageState extends State<MyHomePage> {
       onResume: (Map<String, dynamic> message) async {
         print('on resume $message');
       },
-      onBackgroundMessage: myBackgroundMessageHandler,
+      onBackgroundMessage: Platform.isIOS ? null : myBackgroundMessageHandler,
       onLaunch: (Map<String, dynamic> message) async {
         print('on launch $message');
       },
     );
+    _firebaseMessaging.subscribeToTopic("all");
   }
 
   void iOSPermission() {
