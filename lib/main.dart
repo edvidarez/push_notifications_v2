@@ -11,9 +11,17 @@ void main() => runApp(MyApp());
 Future<dynamic> myBackgroundMessageHandler(Map<String, dynamic> message) {
   print("Message $message");
   if (message.containsKey('data')) {
-    // Handle data message
-    final dynamic data = message['data'];
+    print('on message $message');
+    final dynamic messageData = message['data'];
+    final dynamic data = messageData['data'];
+    final dynamic alert = data["alert"];
+    final title = alert["title"];
+    final body = alert["body"];
     print("data $data");
+    _showNotificationWithDefaultSound(
+      title,
+      body,
+    );
   }
 
   if (message.containsKey('notification')) {
@@ -23,6 +31,28 @@ Future<dynamic> myBackgroundMessageHandler(Map<String, dynamic> message) {
   }
 
   // Or do other work.
+}
+
+final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+Future _showNotificationWithDefaultSound(String title, String msj) async {
+  var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'com.example.push_notifications_V2',
+      'channel name',
+      'channel description',
+      importance: Importance.Max,
+      priority: Priority.High);
+  var iOSPlatformChannelSpecifics = IOSNotificationDetails(
+      presentAlert: true, presentBadge: true, presentSound: true);
+  var platformChannelSpecifics = NotificationDetails(
+      androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
+  await _flutterLocalNotificationsPlugin.show(
+    0,
+    title,
+    msj,
+    platformChannelSpecifics,
+    payload: 'Default_Sound',
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -71,8 +101,6 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   final connector = createPushConnector();
-  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
@@ -87,7 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // Initialize parse
     print("Initializing Parse");
     await Parse()
-        .initialize("myAppId", "https://486e54e4.ngrok.io/parse", debug: true);
+        .initialize("myAppId", "https://2728b454.ngrok.io/parse", debug: true);
 
     final ParseResponse response = await Parse().healthCheck();
 
@@ -116,7 +144,16 @@ class _MyHomePageState extends State<MyHomePage> {
           },
           onMessage: (Map<String, dynamic> message) async {
             print('on message $message');
-            _showNotificationWithDefaultSound(message.toString());
+            final dynamic messageData = message['data'];
+            final dynamic data = messageData['data'];
+            final dynamic alert = data["alert"];
+            final title = alert["title"];
+            final body = alert["body"];
+            print("data $data");
+            _showNotificationWithDefaultSound(
+              title,
+              body,
+            );
           },
           onBackgroundMessage: myBackgroundMessageHandler);
       connector.requestNotificationPermissions();
@@ -130,7 +167,19 @@ class _MyHomePageState extends State<MyHomePage> {
       _firebaseMessaging.configure(
         onMessage: (Map<String, dynamic> message) async {
           print('on message $message');
-          _showNotificationWithDefaultSound(message.toString());
+          final dynamic messageData = message['data'];
+          print(messageData);
+          final dynamic data = messageData['data'];
+          print(data);
+          final dynamic alert = data["alert"];
+          print(alert);
+          final title = alert["title"];
+          final body = alert["body"];
+          print("data $data");
+          _showNotificationWithDefaultSound(
+            title,
+            body,
+          );
         },
         onResume: (Map<String, dynamic> message) async {
           print('on resume $message');
@@ -161,22 +210,6 @@ class _MyHomePageState extends State<MyHomePage> {
   Future _onSelectNotification(String payload) {
     debugPrint("payload : $payload");
     // open App
-  }
-
-  Future _showNotificationWithDefaultSound(String msj) async {
-    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
-        'com.project.name', 'channel name', 'channel description',
-        importance: Importance.Max, priority: Priority.High);
-    var iOSPlatformChannelSpecifics = IOSNotificationDetails();
-    var platformChannelSpecifics = NotificationDetails(
-        androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
-    await _flutterLocalNotificationsPlugin.show(
-      0,
-      'Title',
-      "$msj",
-      platformChannelSpecifics,
-      payload: 'Default_Sound',
-    );
   }
 
   void _incrementCounter() {
