@@ -1,8 +1,10 @@
 import 'dart:io';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:flutter/material.dart';
 import 'package:parse_server_sdk/parse_server_sdk.dart';
+import 'package:flutter_apns/apns.dart';
 
 void main() => runApp(MyApp());
 Future<dynamic> myBackgroundMessageHandler(Map<String, dynamic> message) {
@@ -67,11 +69,12 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+  final connector = createPushConnector();
 
   @override
   void initState() {
     firebaseCloudMessagingListeners();
-    initParse();
+
     super.initState();
   }
 
@@ -91,42 +94,53 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Future<void> initInstallation() async {
+  Future<void> initInstallation() async {}
+
+  void firebaseCloudMessagingListeners() async {
+    await initParse();
     final ParseInstallation installation =
         await ParseInstallation.currentInstallation();
-    String token = await _firebaseMessaging.getToken();
-    print("Token: $token");
-    installation.set("deviceToken", token);
-    final ParseResponse response = await installation.create();
-    print(response);
-  }
 
-  void firebaseCloudMessagingListeners() {
     if (Platform.isIOS) {
-      iOSPermission();
+      connector.configure(
+          onLaunch: (Map<String, dynamic> message) async {
+            print('on launch $message');
+          },
+          onResume: (Map<String, dynamic> message) async {
+            print('on resume $message');
+          },
+          onMessage: (Map<String, dynamic> message) async {
+            print('on message $message');
+          },
+          onBackgroundMessage: myBackgroundMessageHandler);
+      connector.requestNotificationPermissions();
+      connector.token.addListener(() async {
+        print('Token ${connector.token.value}');
+        installation.set("deviceToken", connector.token.value);
+        final ParseResponse response = await installation.create();
+        print(response);
+      });
+    } else {
+      _firebaseMessaging.configure(
+        onMessage: (Map<String, dynamic> message) async {
+          print('on message $message');
+        },
+        onResume: (Map<String, dynamic> message) async {
+          print('on resume $message');
+        },
+        onBackgroundMessage: myBackgroundMessageHandler,
+        onLaunch: (Map<String, dynamic> message) async {
+          print('on launch $message');
+        },
+      );
+      String token = await _firebaseMessaging.getToken();
+      print('Token ${token}');
+      installation.set("deviceToken", token);
+      final ParseResponse response = await installation.create();
+      print(response);
     }
-    _firebaseMessaging.configure(
-      onMessage: (Map<String, dynamic> message) async {
-        print('on message $message');
-      },
-      onResume: (Map<String, dynamic> message) async {
-        print('on resume $message');
-      },
-      onBackgroundMessage: Platform.isIOS ? null : myBackgroundMessageHandler,
-      onLaunch: (Map<String, dynamic> message) async {
-        print('on launch $message');
-      },
-    );
-    _firebaseMessaging.subscribeToTopic("all");
-  }
 
-  void iOSPermission() {
-    _firebaseMessaging.requestNotificationPermissions(
-        IosNotificationSettings(sound: true, badge: true, alert: true));
-    _firebaseMessaging.onIosSettingsRegistered
-        .listen((IosNotificationSettings settings) {
-      print("Settings registered: $settings");
-    });
+    //_firebaseMessaging.subscribeToTopic("all");
   }
 
   void _incrementCounter() {
