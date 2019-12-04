@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:parse_server_sdk/parse_server_sdk.dart';
 import 'package:flutter_apns/apns.dart';
 
@@ -70,11 +71,15 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   final connector = createPushConnector();
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
     firebaseCloudMessagingListeners();
 
+    _configureLocalNotifications();
+    initParse();
     super.initState();
   }
 
@@ -111,6 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
           },
           onMessage: (Map<String, dynamic> message) async {
             print('on message $message');
+            _showNotificationWithDefaultSound(message.toString());
           },
           onBackgroundMessage: myBackgroundMessageHandler);
       connector.requestNotificationPermissions();
@@ -124,6 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _firebaseMessaging.configure(
         onMessage: (Map<String, dynamic> message) async {
           print('on message $message');
+          _showNotificationWithDefaultSound(message.toString());
         },
         onResume: (Map<String, dynamic> message) async {
           print('on resume $message');
@@ -141,6 +148,35 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     //_firebaseMessaging.subscribeToTopic("all");
+  }
+
+  void _configureLocalNotifications() {
+    var android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    var iOS = IOSInitializationSettings();
+    var initSetttings = InitializationSettings(android, iOS);
+    _flutterLocalNotificationsPlugin.initialize(initSetttings,
+        onSelectNotification: _onSelectNotification);
+  }
+
+  Future _onSelectNotification(String payload) {
+    debugPrint("payload : $payload");
+    // open App
+  }
+
+  Future _showNotificationWithDefaultSound(String msj) async {
+    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        'com.project.name', 'channel name', 'channel description',
+        importance: Importance.Max, priority: Priority.High);
+    var iOSPlatformChannelSpecifics = IOSNotificationDetails();
+    var platformChannelSpecifics = NotificationDetails(
+        androidPlatformChannelSpecifics, iOSPlatformChannelSpecifics);
+    await _flutterLocalNotificationsPlugin.show(
+      0,
+      'Title',
+      "$msj",
+      platformChannelSpecifics,
+      payload: 'Default_Sound',
+    );
   }
 
   void _incrementCounter() {
