@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:parse_server_sdk/parse_server_sdk.dart';
 import 'package:flutter_apns/apns.dart';
+import 'package:push_notifications_v2/alert_object.dart';
+import 'package:push_notifications_v2/notification_object.dart';
 
 void main() => runApp(MyApp());
 Future<dynamic> myBackgroundMessageHandler(Map<String, dynamic> message) {
@@ -171,6 +173,8 @@ class _MyHomePageState extends State<MyHomePage> {
           print(messageData);
           final dynamic data = messageData['data'];
           print(data);
+          AlertObject alertObj = AlertObject.fromJson(data);
+          print("${alertObj}");
           final dynamic alert = data["alert"];
           print(alert);
           final title = alert["title"];
