@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -107,9 +108,12 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     firebaseCloudMessagingListeners();
-
     _configureLocalNotifications();
     initParse();
+    // String s =
+    //     '''{"alert":{"body":"Bob wants to play poker","title":"Game Request"}}''';
+    // AlertObject alertObj = AlertObject.fromJson(json.decode(s));
+    // print("$alertObj");
     super.initState();
   }
 
@@ -173,12 +177,11 @@ class _MyHomePageState extends State<MyHomePage> {
           print(messageData);
           final dynamic data = messageData['data'];
           print(data);
-          AlertObject alertObj = AlertObject.fromJson(data);
+          AlertObject alertObj = AlertObject.fromJson(json.decode(data));
           print("${alertObj}");
-          final dynamic alert = data["alert"];
-          print(alert);
-          final title = alert["title"];
-          final body = alert["body"];
+
+          final title = alertObj.alert.title;
+          final body = alertObj.alert.body;
           print("data $data");
           _showNotificationWithDefaultSound(
             title,
